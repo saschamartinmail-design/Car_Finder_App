@@ -180,6 +180,9 @@
   .actions .ghost-btn { justify-content: center; width: 100%; }
 
   /* Leaflet-Anpassungen */
+  /* Dunkle Karte: OSM-Kacheln invertiert und entsättigt – Marker bleiben unverändert */
+  .map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.35); }
+  .map-dark.leaflet-container { background: #1a1d22; }
   .leaflet-container { font-family: Manrope, system-ui, sans-serif; background: var(--surface-2); }
   .leaflet-top.leaflet-right { top: calc(env(safe-area-inset-top) + 74px); }
   .leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 80%, transparent) !important; color: var(--muted) !important; border-radius: 8px 0 0 8px; font-size: 10px; }
@@ -488,23 +491,23 @@
   // ---------- Karte ----------
   var followUser = true;
   var map = null, tiles = null, carMarker = null, meMarker = null, line = null;
-  var TILE_URL = 'https://{s}.basemaps.cartocdn.com/{style}/{z}/{x}/{y}{r}.png';
-  var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  // OpenStreetMap-Standardkarte: kostenlos, ohne API-Key.
+  // Dunkelmodus: dieselbe Karte, per CSS-Filter abgedunkelt (siehe .map-dark).
+  var TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
   function ensureMap() {
     if (map || typeof L === 'undefined') return;
-    map = L.map('map', { zoomControl: false, attributionControl: false });
+    map = L.map('map', { zoomControl: false, attributionControl: false, maxZoom: 19 });
     L.control.attribution({ position: 'topright', prefix: false }).addTo(map);
     map.on('dragstart', function () { followUser = false; });
     map.on('zoomstart', function () { if (!programmatic) followUser = false; });
+    tiles = L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTR, referrerPolicy: 'strict-origin-when-cross-origin' }).addTo(map);
     updateMapStyle();
   }
   function updateMapStyle() {
     if (!map) return;
-    if (tiles) map.removeLayer(tiles);
-    tiles = L.tileLayer(TILE_URL, {
-      style: isDark() ? 'dark_all' : 'rastertiles/voyager', subdomains: 'abcd', maxZoom: 20, attribution: ATTR, detectRetina: false
-    }).addTo(map);
+    document.getElementById('map').classList.toggle('map-dark', isDark());
     if (line) line.setStyle({ color: cssVar('--route') });
   }
   var carIcon = function () {
