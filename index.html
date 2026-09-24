@@ -159,10 +159,28 @@
     position: absolute; z-index: 600; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 560px;
     background: var(--surface); border-radius: 28px 28px 0 0; box-shadow: 0 -10px 30px var(--shadow);
     padding: 12px 22px calc(env(safe-area-inset-bottom) + 24px); display: flex; flex-direction: column; gap: 16px;
-    transform: translateY(0); transition: transform .45s cubic-bezier(.2,.8,.2,1);
+    transform: translateY(var(--sheet-y, 0px)); transition: transform .4s cubic-bezier(.2,.8,.2,1);
   }
-  .screen:not(.active) .sheet { transform: translateY(40px); }
-  .handle { width: 40px; height: 5px; border-radius: 999px; background: var(--border); align-self: center; }
+  .sheet.dragging { transition: none; }
+  .screen:not(.active) .sheet { transform: translateY(calc(var(--sheet-y, 0px) + 40px)); }
+  /* Griff zum Ein-/Ausklappen */
+  .handle-btn {
+    align-self: center; width: 96px; height: 30px; margin: -10px 0 -8px; border: none; background: transparent;
+    display: grid; place-items: center; cursor: grab; touch-action: none;
+  }
+  .handle-btn::before { content: ""; width: 40px; height: 5px; border-radius: 999px; background: var(--border); transition: background .2s, width .2s; }
+  .handle-btn:focus-visible { outline: 2px solid var(--muted); outline-offset: -2px; border-radius: 12px; }
+  .handle-btn:hover::before, .sheet.dragging .handle-btn::before { background: var(--muted); width: 48px; }
+  .sheet-head { display: flex; align-items: center; gap: 12px; touch-action: none; }
+  .sheet-head .txt { flex: 1; min-width: 0; }
+  .mini-route {
+    flex: none; width: 56px; height: 56px; border-radius: 18px; background: var(--primary-bg); color: var(--primary-fg);
+    display: grid; place-items: center; text-decoration: none;
+    opacity: 0; transform: scale(.8); pointer-events: none; transition: opacity .25s, transform .25s;
+  }
+  .sheet.collapsed .mini-route { opacity: 1; transform: none; pointer-events: auto; }
+  .sheet-body { display: flex; flex-direction: column; gap: 16px; transition: opacity .25s; }
+  .sheet.collapsed .sheet-body { opacity: 0; }
   .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .since { margin: 2px 0 0; font-size: 24px; font-weight: 600; }
   .parked-at { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
@@ -273,12 +291,18 @@
   </div>
 
   <div class="sheet">
-    <div class="handle"></div>
-    <div>
-      <div class="eyebrow">Dein Auto</div>
-      <h2 class="since display" id="since">Parkt seit –</h2>
-      <p class="parked-at" id="parkedAt"></p>
+    <button class="handle-btn" id="sheetHandle" type="button" aria-expanded="true" aria-controls="sheetBody" aria-label="Details einklappen"></button>
+    <div class="sheet-head" id="sheetHead">
+      <div class="txt">
+        <div class="eyebrow">Dein Auto</div>
+        <h2 class="since display" id="since">Parkt seit –</h2>
+        <p class="parked-at" id="parkedAt"></p>
+      </div>
+      <a class="mini-route" id="routeMini" href="#" target="_blank" rel="noopener" aria-label="Zu Fuß zum Auto" tabindex="-1">
+        <svg class="i"><use href="#i-nav"/></svg>
+      </a>
     </div>
+    <div class="sheet-body" id="sheetBody">
     <div class="stats">
       <div class="stat"><b id="statDist">–</b><span>Entfernung</span></div>
       <div class="stat"><b id="statWalk">–</b><span>zu Fuß</span></div>
@@ -291,6 +315,7 @@
       <button class="ghost-btn" id="reparkBtn" type="button">
         <svg class="i"><use href="#i-plus-pin"/></svg> Neu parken
       </button>
+    </div>
     </div>
   </div>
 </section>
@@ -541,7 +566,7 @@
     if (!map || !parking) return;
     programmatic = true; setTimeout(function () { programmatic = false; }, 600);
     var car = L.latLng(parking.lat, parking.lng);
-    var sheetH = document.querySelector('.sheet').offsetHeight || 320;
+    var sheetH = visibleSheetHeight() || 320;
     if (lastFix && haversine(lastFix, parking) < 15000) {
       map.fitBounds(L.latLngBounds([car, [lastFix.lat, lastFix.lng]]), {
         paddingTopLeft: [50, 120], paddingBottomRight: [50, sheetH + 40], maxZoom: 18
@@ -566,10 +591,68 @@
     } else {
       $('statDist').textContent = '–'; $('statWalk').textContent = '–';
     }
-    $('routeBtn').href = 'https://www.google.com/maps/dir/?api=1&destination=' +
+    var routeUrl = 'https://www.google.com/maps/dir/?api=1&destination=' +
       parking.lat.toFixed(6) + ',' + parking.lng.toFixed(6) + '&travelmode=walking';
+    $('routeBtn').href = routeUrl; $('routeMini').href = routeUrl;
   }
   setInterval(refreshStats, 30000);
+
+  // ---------- Ausklappbares Info-Panel ----------
+  var SHEET_KEY = 'carfinder.sheetCollapsed';
+  var sheet = document.querySelector('.sheet'), sheetHead = $('sheetHead'), sheetBody = $('sheetBody'), sheetHandle = $('sheetHandle');
+  var sheetCollapsed = store.get(SHEET_KEY) === true;
+  var sheetY = 0;
+  function collapsedOffset() {
+    var padB = parseFloat(getComputedStyle(sheet).paddingBottom) || 0;
+    return Math.max(0, sheet.offsetHeight - (sheetHead.offsetTop + sheetHead.offsetHeight) - padB);
+  }
+  function setSheetY(y) { sheetY = y; sheet.style.setProperty('--sheet-y', y + 'px'); }
+  function visibleSheetHeight() { return sheet.offsetHeight - sheetY; }
+  function setSheet(collapsed, refit) {
+    sheetCollapsed = collapsed;
+    setSheetY(collapsed ? collapsedOffset() : 0);
+    sheet.classList.toggle('collapsed', collapsed);
+    sheetBody.inert = collapsed;
+    $('routeMini').tabIndex = collapsed ? 0 : -1;
+    sheetHandle.setAttribute('aria-expanded', String(!collapsed));
+    sheetHandle.setAttribute('aria-label', collapsed ? 'Details ausklappen' : 'Details einklappen');
+    store.set(SHEET_KEY, collapsed);
+    if (refit && followUser) setTimeout(fitView, 420);
+  }
+  var drag = null;
+  function sheetDown(e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest('a') ) return;           // Klick auf den Route-Knopf nicht abfangen
+    drag = { y0: e.clientY, t0: performance.now(), base: sheetY, max: collapsedOffset(), moved: false, y: sheetY };
+    sheet.classList.add('dragging');
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+  function sheetMove(e) {
+    if (!drag) return;
+    var dy = e.clientY - drag.y0;
+    if (Math.abs(dy) > 6) drag.moved = true;
+    if (!drag.moved) return;
+    drag.y = Math.min(drag.max, Math.max(0, drag.base + dy));
+    setSheetY(drag.y);
+  }
+  function sheetUp(e) {
+    if (!drag) return;
+    sheet.classList.remove('dragging');
+    var d = drag; drag = null;
+    if (!d.moved) { setSheet(!sheetCollapsed, true); return; }
+    var velocity = (e.clientY - d.y0) / Math.max(1, performance.now() - d.t0);   // px pro ms
+    var collapse = Math.abs(velocity) > 0.4 ? velocity > 0 : d.y > d.max / 2;
+    setSheet(collapse, true);
+  }
+  [sheetHandle, sheetHead].forEach(function (el) {
+    el.addEventListener('pointerdown', sheetDown);
+    el.addEventListener('pointermove', sheetMove);
+    el.addEventListener('pointerup', sheetUp);
+    el.addEventListener('pointercancel', sheetUp);
+  });
+  // Tastatur: Enter/Leertaste auf dem Griff
+  sheetHandle.addEventListener('click', function (e) { if (e.detail === 0) setSheet(!sheetCollapsed, true); });
+  window.addEventListener('resize', function () { if (sheetCollapsed) setSheetY(collapsedOffset()); });
 
   // ---------- Navigation zwischen Screens ----------
   var current = null;
@@ -580,6 +663,8 @@
     $('backToMap').hidden = !(name === 'park' && parking);
     if (name === 'map') {
       followUser = true;
+      refreshStats();
+      setSheet(sheetCollapsed, false);
       ensureMap();
       if (map) {
         map.invalidateSize();
