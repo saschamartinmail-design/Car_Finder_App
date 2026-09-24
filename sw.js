@@ -1,6 +1,6 @@
 // Car Finder – Service Worker
 // App-Dateien werden offline vorgehalten; Kartenkacheln kommen immer aus dem Netz.
-const CACHE = 'carfinder-v3';
+const CACHE = 'carfinder-v4';
 const APP_SHELL = [
   './',
   './index.html',
@@ -29,7 +29,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   // Kartenkacheln: nicht cachen
-  if (url.hostname.endsWith('basemaps.cartocdn.com')) return;
+  if (url.hostname.endsWith('tile.openstreetmap.org')) return;
 
   // Seite selbst: erst Netz (für Updates), sonst Cache
   if (req.mode === 'navigate') {

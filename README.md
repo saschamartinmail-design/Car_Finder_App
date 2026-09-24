@@ -38,7 +38,7 @@ leaflet.js, leaflet.css Kartenbibliothek Leaflet 1.9.4
 
 ## Hinweise
 - Der Standort funktioniert nur über **HTTPS** (bei GitHub Pages automatisch).
-- Kartenstil: CARTO Voyager (hell) bzw. Dark Matter (dunkel) auf Basis von OpenStreetMap, für private Nutzung kostenlos.
+- Karte: OpenStreetMap-Standardkarte, kostenlos und ohne API-Key. Im Dunkelmodus wird dieselbe Karte per Filter abgedunkelt.
 - Fußweg-Schätzung: Luftlinie × 1,3 bei ca. 4,8 km/h.
 
 ## Nächste Stufe (geplant)
