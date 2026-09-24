@@ -1,0 +1,26 @@
+{
+  "name": "Car Finder",
+  "short_name": "Car Finder",
+  "description": "Parkposition speichern und zu Fuß zurück zum Auto finden.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E1116",
+  "theme_color": "#0E1116",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Jetzt parken",
+      "short_name": "Parken",
+      "description": "Aktuelle Position sofort als Parkplatz speichern",
+      "url": "./?action=park",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
