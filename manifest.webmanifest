@@ -21,6 +21,13 @@
       "description": "Aktuelle Position sofort als Parkplatz speichern",
       "url": "./?action=park",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Zu Fuß zum Auto",
+      "short_name": "Zum Auto",
+      "description": "Google-Maps-Fußweg zum geparkten Auto öffnen",
+      "url": "./?action=route",
+      "icons": [{ "src": "icon-route-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

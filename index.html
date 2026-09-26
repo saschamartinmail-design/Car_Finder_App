@@ -685,10 +685,21 @@
   startWatch();
   if (parking) requestPersist();
   var params = new URLSearchParams(location.search);
-  if (params.get('action') === 'park') {
-    history.replaceState(null, '', location.pathname);
+  var action = params.get('action');
+  if (action) history.replaceState(null, '', location.pathname);
+  if (action === 'park') {
     showScreen('park');
     park();
+  } else if (action === 'route') {
+    // Kurzbefehl „Zu Fuß zum Auto“: direkt die Google-Maps-Fußroute öffnen
+    if (parking) {
+      showScreen('map');
+      toast('Route wird in Google Maps geöffnet …', 2500);
+      setTimeout(function () { window.location.href = $('routeBtn').href; }, 150);
+    } else {
+      showScreen('park');
+      toast('Noch kein Parkplatz gespeichert.', 3500);
+    }
   } else {
     showScreen(parking ? 'map' : 'park');
   }
