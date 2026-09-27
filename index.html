@@ -216,6 +216,22 @@
   @keyframes ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--me) 45%, transparent); } 100% { box-shadow: 0 0 0 18px transparent; } }
 
   /* Toast */
+  .prompt {
+    position: fixed; inset: 0; z-index: 900; display: flex; align-items: flex-end; justify-content: center;
+    padding: 16px 16px calc(env(safe-area-inset-bottom) + 16px); background: rgba(0, 0, 0, .45);
+    animation: fadein .2s ease;
+  }
+  .prompt[hidden] { display: none; }
+  .prompt-card {
+    width: 100%; max-width: 520px; background: var(--surface); border-radius: 24px; padding: 22px;
+    display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 40px var(--shadow);
+    animation: slideup .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .prompt-card h2 { margin: 0; font-size: 24px; font-weight: 600; }
+  .prompt-card .parked-at { margin: 0 0 6px; }
+  .prompt-card .ghost-btn { justify-content: center; width: 100%; }
+  @keyframes fadein { from { opacity: 0; } }
+  @keyframes slideup { from { transform: translateY(30px); opacity: 0; } }
   #toast {
     position: fixed; z-index: 1000; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); transform: translate(-50%, 20px);
     max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 14px; background: var(--text); color: var(--bg);
@@ -319,6 +335,18 @@
     </div>
   </div>
 </section>
+
+<div id="routePrompt" class="prompt" hidden>
+  <div class="prompt-card" role="dialog" aria-modal="true" aria-labelledby="routePromptTitle">
+    <div class="eyebrow">Kurzbefehl</div>
+    <h2 class="display" id="routePromptTitle">Zu Fuß zum Auto</h2>
+    <p class="parked-at" id="routePromptInfo"></p>
+    <a class="btn primary" id="routePromptGo" href="#">
+      <svg class="i"><use href="#i-nav"/></svg> In Google Maps starten
+    </a>
+    <button class="ghost-btn" id="routePromptClose" type="button">Abbrechen</button>
+  </div>
+</div>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -579,6 +607,20 @@
   $('fitBtn').addEventListener('click', function () { followUser = true; fitView(); });
 
   // ---------- Werte im Sheet ----------
+  // Google-Maps-Link für die Fußroute.
+  // Android: direkt die Google-Maps-App öffnen (intent mit Paketname) – kein Auswahldialog,
+  // keine Web-Version. Ist die App nicht installiert, greift automatisch die Web-Adresse.
+  var IS_ANDROID = /Android/i.test(navigator.userAgent);
+  function routeUrl() {
+    if (!parking) return '#';
+    var dest = parking.lat.toFixed(6) + ',' + parking.lng.toFixed(6);
+    var path = 'www.google.com/maps/dir/?api=1&destination=' + dest + '&travelmode=walking';
+    var web = 'https://' + path;
+    if (!IS_ANDROID) return web;
+    return 'intent://' + path + '#Intent;scheme=https;package=com.google.android.apps.maps;' +
+      'S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+  }
+
   function refreshStats() {
     if (!parking) return;
     $('since').textContent = fmtSince(parking.ts);
@@ -587,13 +629,17 @@
     if (lastFix) {
       var d = haversine(lastFix, parking);
       $('statDist').textContent = fmtDist(d);
+      if (!$('routePrompt').hidden) $('routePromptInfo').textContent = fmtDist(d) + ' · ' + (d < 15 ? 'Du bist schon da!' : fmtWalk(d) + ' zu Fuß');
       $('statWalk').textContent = d < 15 ? 'Da!' : fmtWalk(d);
     } else {
       $('statDist').textContent = '–'; $('statWalk').textContent = '–';
     }
-    var routeUrl = 'https://www.google.com/maps/dir/?api=1&destination=' +
-      parking.lat.toFixed(6) + ',' + parking.lng.toFixed(6) + '&travelmode=walking';
-    $('routeBtn').href = routeUrl; $('routeMini').href = routeUrl;
+    var url = routeUrl();
+    ['routeBtn', 'routeMini', 'routePromptGo'].forEach(function (id) {
+      var a = $(id); if (!a) return;
+      a.href = url;
+      if (IS_ANDROID) a.removeAttribute('target'); else a.target = '_blank';
+    });
   }
   setInterval(refreshStats, 30000);
 
@@ -654,6 +700,18 @@
   sheetHandle.addEventListener('click', function (e) { if (e.detail === 0) setSheet(!sheetCollapsed, true); });
   window.addEventListener('resize', function () { if (sheetCollapsed) setSheetY(collapsedOffset()); });
 
+  // ---------- Kurzbefehl-Dialog „Zu Fuß zum Auto“ ----------
+  function openRoutePrompt() {
+    refreshStats();
+    var d = $('statDist').textContent, w = $('statWalk').textContent;
+    $('routePromptInfo').textContent = (d && d !== '–') ? (d + ' · ' + w) : 'Dein Parkplatz ist gespeichert.';
+    $('routePrompt').hidden = false;
+  }
+  function closeRoutePrompt() { $('routePrompt').hidden = true; }
+  $('routePromptClose').addEventListener('click', closeRoutePrompt);
+  $('routePromptGo').addEventListener('click', function () { setTimeout(closeRoutePrompt, 300); });
+  $('routePrompt').addEventListener('click', function (e) { if (e.target === this) closeRoutePrompt(); });
+
   // ---------- Navigation zwischen Screens ----------
   var current = null;
   function showScreen(name) {
@@ -694,8 +752,7 @@
     // Kurzbefehl „Zu Fuß zum Auto“: direkt die Google-Maps-Fußroute öffnen
     if (parking) {
       showScreen('map');
-      toast('Route wird in Google Maps geöffnet …', 2500);
-      setTimeout(function () { window.location.href = $('routeBtn').href; }, 150);
+      openRoutePrompt();
     } else {
       showScreen('park');
       toast('Noch kein Parkplatz gespeichert.', 3500);
