@@ -7,7 +7,7 @@ Schlanke Web-App: Parkposition per Knopfdruck speichern, auf der Karte anzeigen 
 - **Karte:** Karte über den ganzen Bildschirm mit Auto, eigener Position (live) und Luftlinie. Unten Parkdauer, Entfernung, geschätzter Fußweg und GPS-Genauigkeit.
 - **Zu Fuß zum Auto:** öffnet Google Maps direkt im Fußgängermodus.
 - **Hell / Dunkel / Automatisch:** Umschalter oben rechts. „Automatisch“ folgt der Einstellung des Handys. Die Karte wechselt mit.
-- **Kurzbefehle:** App-Symbol lange drücken → „Jetzt parken“ (speichert sofort) oder „Zu Fuß zum Auto“.
+- **Kurzbefehle:** App-Symbol lange drücken → „Jetzt parken“ oder „Zu Fuß zum Auto“. „Jetzt parken“ speichert sofort, wenn noch kein Parkplatz gespeichert ist, sonst fragt die App, ob der alte ersetzt werden soll.
 - **Offline:** App-Dateien und Schriften werden bei der Installation auf dem Handy zwischengespeichert. Die Kartenkacheln brauchen Internet, die Parkposition und der Route-Knopf gehen aber auch ohne Karte.
 - **Datenschutz:** Die Position wird nur lokal im Browser des Handys gespeichert (localStorage). Die Schriften liegen im Repo selbst, es gibt keine Verbindung zu Google Fonts. Externe Verbindungen: nur OpenStreetMap (Kartenkacheln) und Google Maps, wenn man die Route startet.
 - **Über & Datenschutz:** ⓘ-Knopf oben rechts. Zeigt den Hinweis „Nutzung auf eigene Gefahr“, welche Daten wo landen und einen Knopf „Parkplatz löschen“ (zweimal tippen zur Bestätigung). Der Text steckt in `index.html` und ist auch offline lesbar.
@@ -16,7 +16,9 @@ Schlanke Web-App: Parkposition per Knopfdruck speichern, auf der Karte anzeigen 
 ## Dateien
 Alle Dateien liegen **ohne Unterordner** nebeneinander, damit sie sich einfach bei GitHub hochladen lassen:
 ```
-index.html              App (HTML, CSS, JS)
+index.html              App-Oberfläche (HTML, CSS)
+app.js                  App-Logik
+theme.js                setzt das Farbschema vor dem ersten Anzeigen
 manifest.webmanifest    PWA-Beschreibung (Name, Icons, Kurzbefehle)
 sw.js                   Service Worker (Offline-Cache)
 icon-192.png, icon-512.png, icon-maskable-512.png   App-Icons
@@ -28,7 +30,7 @@ leaflet.js, leaflet.css Kartenbibliothek Leaflet 1.9.4
 
 ## Veröffentlichen über GitHub Pages
 1. Neues Repository anlegen, z. B. `carfinder`.
-2. **Add file → Upload files**, alle 14 Dateien aus diesem Ordner markieren und hochladen → **Commit changes**.
+2. **Add file → Upload files**, alle 16 Dateien aus diesem Ordner markieren und hochladen → **Commit changes**.
 3. Im Repository: **Settings → Pages → Source: „Deploy from a branch“ → Branch `main` / `/ (root)` → Save**.
 4. Nach ca. 1 Minute läuft die App unter `https://<dein-github-name>.github.io/carfinder/`.
 
@@ -47,6 +49,14 @@ leaflet.js, leaflet.css Kartenbibliothek Leaflet 1.9.4
 - Laden die Kartenkacheln nicht (offline, Server gesperrt), zeigt das Panel einen Hinweis. Die Route zu Google Maps funktioniert unabhängig davon.
 - Kein Parkplatz im Code: Die Position existiert nur im Browser-Speicher des jeweiligen Handys. Wer die App neu installiert, startet immer leer auf dem Parken-Screen. Unbrauchbare gespeicherte Einträge werden beim Start verworfen.
 - Fußweg-Schätzung: Luftlinie × 1,3 bei ca. 4,8 km/h.
+
+## Sicherheit
+- **Content-Security-Policy** (Meta-Tag in `index.html`): nur eigene Skripte, keine Inline-Skripte, Bilder nur von hier und den OpenStreetMap-Kacheln. Darum steht der JavaScript-Code in `app.js` und `theme.js` und nicht in `index.html`. Neue externe Dienste müssen dort freigegeben werden.
+- **Kein Einbetten:** Läuft die App in einem iframe einer fremden Seite, startet sie nicht und zeigt nur einen Link zum direkten Öffnen.
+- **Links mit `?action=park`** überschreiben einen gespeicherten Parkplatz nie ohne Rückfrage.
+- **Gespeicherte Daten** werden beim Start geprüft und nur als Text angezeigt, nie als HTML.
+- **Speicher voll oder gesperrt:** Die App warnt, statt still nicht zu speichern.
+- `leaflet.js` und `leaflet.css` sind unverändert die offizielle Version 1.9.4. Die App nutzt `bindPopup` nicht und ist daher von CVE-2025-69993 nicht betroffen.
 
 ## Nächste Stufe (geplant)
 Stufe 2: dieselbe App mit Capacitor als Android-App verpacken, dazu die automatische Ausstiegs-Erkennung (Activity Recognition, Bluetooth optional).

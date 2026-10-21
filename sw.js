@@ -1,9 +1,11 @@
 // Car Finder – Service Worker
 // App-Dateien werden offline vorgehalten; Kartenkacheln kommen immer aus dem Netz.
-const CACHE = 'carfinder-v9';
+const CACHE = 'carfinder-v10';
 const APP_SHELL = [
   './',
   './index.html',
+  './app.js',
+  './theme.js',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
