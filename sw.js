@@ -1,12 +1,14 @@
 // Car Finder – Service Worker
 // App-Dateien werden offline vorgehalten; Kartenkacheln kommen immer aus dem Netz.
-const CACHE = 'carfinder-v6';
+const CACHE = 'carfinder-v7';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
+  './manrope.woff2',
+  './sora.woff2',
   './leaflet.css',
   './leaflet.js'
 ];
@@ -43,10 +45,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Alles andere (Leaflet, Schriften, Icons): erst Cache, dann Netz
+  // Alles andere (Leaflet, Schriften, Icons): erst Cache, dann Netz – nur eigene Dateien
   event.respondWith(
     caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-      if (res.ok && (url.origin === location.origin || url.hostname.includes('fonts.g') )) {
+      if (res.ok && url.origin === location.origin) {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(req, copy));
       }

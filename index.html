@@ -12,9 +12,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
+<!-- Schriften liegen im Repo selbst – keine Verbindung zu Google (Lizenz: FONTS-LICENSE.txt) -->
+<link rel="preload" href="manrope.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="sora.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="leaflet.css">
 <script>
   // Theme früh setzen, damit nichts aufblitzt
@@ -26,6 +26,16 @@
   })();
 </script>
 <style>
+  /* Lokale Schriften (variable Fonts: eine Datei je Schrift, alle Strichstärken) */
+  @font-face {
+    font-family: Manrope; font-style: normal; font-weight: 200 800; font-display: swap;
+    src: url(manrope.woff2) format("woff2");
+  }
+  @font-face {
+    font-family: Sora; font-style: normal; font-weight: 100 800; font-display: swap;
+    src: url(sora.woff2) format("woff2");
+  }
+
   :root {
     --bg: #F2F4F3;
     --surface: #FFFFFF;

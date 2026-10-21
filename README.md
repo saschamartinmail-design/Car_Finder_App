@@ -7,24 +7,27 @@ Schlanke Web-App: Parkposition per Knopfdruck speichern, auf der Karte anzeigen 
 - **Karte:** Karte über den ganzen Bildschirm mit Auto, eigener Position (live) und Luftlinie. Unten Parkdauer, Entfernung, geschätzter Fußweg und GPS-Genauigkeit.
 - **Zu Fuß zum Auto:** öffnet Google Maps direkt im Fußgängermodus.
 - **Hell / Dunkel / Automatisch:** Umschalter oben rechts. „Automatisch“ folgt der Einstellung des Handys. Die Karte wechselt mit.
-- **Kurzbefehl:** App-Symbol lange drücken → „Jetzt parken“ (speichert sofort).
-- **Offline:** App-Dateien werden auf dem Handy zwischengespeichert. Die Kartenkacheln brauchen Internet, die Parkposition und der Route-Knopf gehen aber auch ohne Karte.
-- **Datenschutz:** Die Position wird nur lokal im Browser des Handys gespeichert (localStorage).
+- **Kurzbefehle:** App-Symbol lange drücken → „Jetzt parken“ (speichert sofort) oder „Zu Fuß zum Auto“.
+- **Offline:** App-Dateien und Schriften werden bei der Installation auf dem Handy zwischengespeichert. Die Kartenkacheln brauchen Internet, die Parkposition und der Route-Knopf gehen aber auch ohne Karte.
+- **Datenschutz:** Die Position wird nur lokal im Browser des Handys gespeichert (localStorage). Die Schriften liegen im Repo selbst, es gibt keine Verbindung zu Google Fonts. Externe Verbindungen: nur OpenStreetMap (Kartenkacheln) und Google Maps, wenn man die Route startet.
 - **Dauerhafter Speicher:** Beim Parken bittet die App Chrome, ihre Daten nicht automatisch aufzuräumen (`navigator.storage.persist()`). Die Position bleibt also auch bei vollem Handyspeicher, beim Schließen der App und bei einem Neustart erhalten.
 
 ## Dateien
 Alle Dateien liegen **ohne Unterordner** nebeneinander, damit sie sich einfach bei GitHub hochladen lassen:
 ```
 index.html              App (HTML, CSS, JS)
-manifest.webmanifest    PWA-Beschreibung (Name, Icons, Kurzbefehl)
+manifest.webmanifest    PWA-Beschreibung (Name, Icons, Kurzbefehle)
 sw.js                   Service Worker (Offline-Cache)
 icon-192.png, icon-512.png, icon-maskable-512.png   App-Icons
+icon-park-192.png, icon-route-192.png               Icons der Kurzbefehle
+manrope.woff2, sora.woff2   Schriften Manrope und Sora (lokal statt Google Fonts)
+FONTS-LICENSE.txt       Lizenz der Schriften (SIL Open Font License 1.1)
 leaflet.js, leaflet.css Kartenbibliothek Leaflet 1.9.4
 ```
 
 ## Veröffentlichen über GitHub Pages
 1. Neues Repository anlegen, z. B. `carfinder`.
-2. **Add file → Upload files**, alle 9 Dateien aus diesem Ordner markieren und hochladen → **Commit changes**.
+2. **Add file → Upload files**, alle 14 Dateien aus diesem Ordner markieren und hochladen → **Commit changes**.
 3. Im Repository: **Settings → Pages → Source: „Deploy from a branch“ → Branch `main` / `/ (root)` → Save**.
 4. Nach ca. 1 Minute läuft die App unter `https://<dein-github-name>.github.io/carfinder/`.
 
