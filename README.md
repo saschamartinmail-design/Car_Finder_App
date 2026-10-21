@@ -43,6 +43,9 @@ leaflet.js, leaflet.css Kartenbibliothek Leaflet 1.9.4
 ## Hinweise
 - Der Standort funktioniert nur über **HTTPS** (bei GitHub Pages automatisch).
 - Karte: OpenStreetMap-Standardkarte, kostenlos und ohne API-Key. Im Dunkelmodus wird dieselbe Karte per Filter abgedunkelt.
+- Kartenanbieter wechseln: nur `MAP_TILES` oben im Kartenteil von `index.html` ändern und den Abschnitt „Wer deine IP-Adresse sieht“ im Info-Dialog anpassen.
+- Laden die Kartenkacheln nicht (offline, Server gesperrt), zeigt das Panel einen Hinweis. Die Route zu Google Maps funktioniert unabhängig davon.
+- Kein Parkplatz im Code: Die Position existiert nur im Browser-Speicher des jeweiligen Handys. Wer die App neu installiert, startet immer leer auf dem Parken-Screen. Unbrauchbare gespeicherte Einträge werden beim Start verworfen.
 - Fußweg-Schätzung: Luftlinie × 1,3 bei ca. 4,8 km/h.
 
 ## Nächste Stufe (geplant)

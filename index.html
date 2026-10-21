@@ -195,6 +195,8 @@
   .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .since { margin: 2px 0 0; font-size: 24px; font-weight: 600; }
   .parked-at { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+  .map-status { margin: 6px 0 0; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--warn); }
+  .map-status::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: currentColor; flex: none; }
   .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .stat { padding: 12px; background: var(--surface-2); border-radius: 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .stat b { font-family: Sora, Manrope, sans-serif; font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -338,6 +340,7 @@
         <div class="eyebrow">Dein Auto</div>
         <h2 class="since display" id="since">Parkt seit –</h2>
         <p class="parked-at" id="parkedAt"></p>
+        <p class="map-status" id="mapStatus" role="status" aria-live="polite" hidden></p>
       </div>
       <a class="mini-route" id="routeMini" href="#" target="_blank" rel="noopener" aria-label="Zu Fuß zum Auto" tabindex="-1">
         <svg class="i"><use href="#i-nav"/></svg>
@@ -427,8 +430,11 @@
   var memory = {};
   var store = {
     get: function (k) {
-      try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }
-      catch (e) { return memory[k] || null; }
+      var v;
+      try { v = localStorage.getItem(k); } catch (e) { return memory[k] || null; }
+      if (!v) return null;
+      try { return JSON.parse(v); }
+      catch (e) { try { localStorage.removeItem(k); } catch (e2) {} return null; }   // unlesbarer Eintrag → entfernen
     },
     remove: function (k) {
       delete memory[k];
@@ -505,7 +511,24 @@
   if (mq.addEventListener) mq.addEventListener('change', function () { if (themePref === 'auto') applyTheme(); });
 
   // ---------- Zustand ----------
-  var parking = store.get(PARK_KEY);   // {lat, lng, acc, ts}
+  // Der Parkplatz existiert NUR im Browser-Speicher dieses Handys. Es gibt keine
+  // Start- oder Beispielposition im Code: Ohne eigenen Eintrag startet die App
+  // immer auf dem Parken-Screen. Unbrauchbare Einträge werden verworfen.
+  function validParking(p) {
+    var num = function (v) { return typeof v === 'number' && isFinite(v); };
+    return !!p && typeof p === 'object' &&
+      num(p.lat) && p.lat >= -90 && p.lat <= 90 &&
+      num(p.lng) && p.lng >= -180 && p.lng <= 180 &&
+      !(p.lat === 0 && p.lng === 0) &&
+      num(p.acc) && p.acc >= 0 &&
+      num(p.ts) && p.ts > 0;   // Uhrzeit bewusst nicht streng prüfen: falsche Handy-Uhr darf keinen Parkplatz löschen
+  }
+  function loadParking() {
+    var p = store.get(PARK_KEY);
+    if (p && !validParking(p)) { store.remove(PARK_KEY); return null; }
+    return p;
+  }
+  var parking = loadParking();   // {lat, lng, acc, ts} oder null
   var lastFix = null;                  // {lat, lng, acc, ts}
   var fixListeners = [];
   var watchId = null;
@@ -608,20 +631,51 @@
   // ---------- Karte ----------
   var followUser = true;
   var map = null, tiles = null, carMarker = null, meMarker = null, line = null;
-  // OpenStreetMap-Standardkarte: kostenlos, ohne API-Key.
+  // ===== Kartenanbieter – NUR HIER ändern =====
+  // Aktuell: OpenStreetMap-Standardkarte, kostenlos, ohne API-Key.
+  // Wechsel zu einem anderen Anbieter (z. B. mit eigenem Schlüssel): url, attribution
+  // und maxZoom anpassen UND den Abschnitt „Wer deine IP-Adresse sieht“ im Info-Dialog.
   // Dunkelmodus: dieselbe Karte, per CSS-Filter abgedunkelt (siehe .map-dark).
-  var TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  var MAP_TILES = {
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  };
+  var TILE_FAIL_LIMIT = 3;   // so viele Fehlschläge ohne Erfolg → Hinweis anzeigen
 
   function ensureMap() {
     if (map || typeof L === 'undefined') return;
-    map = L.map('map', { zoomControl: false, attributionControl: false, maxZoom: 19 });
+    map = L.map('map', { zoomControl: false, attributionControl: false, maxZoom: MAP_TILES.maxZoom });
     L.control.attribution({ position: 'topright', prefix: false }).addTo(map);
     map.on('dragstart', function () { followUser = false; });
     map.on('zoomstart', function () { if (!programmatic) followUser = false; });
-    tiles = L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTR, referrerPolicy: 'strict-origin-when-cross-origin' }).addTo(map);
+    tiles = L.tileLayer(MAP_TILES.url, { maxZoom: MAP_TILES.maxZoom, attribution: MAP_TILES.attribution, referrerPolicy: 'strict-origin-when-cross-origin' }).addTo(map);
+    tiles.on('tileerror', onTileError);
+    tiles.on('tileload', onTileLoad);
     updateMapStyle();
+    updateMapStatus();
   }
+
+  // ---------- Kartenstatus: Hinweis, wenn Kacheln nicht laden ----------
+  // Fälle: kein Internet, Kartenserver gesperrt/überlastet, Leaflet nicht geladen.
+  // Die Route zu Google Maps hängt nicht an der Karte und funktioniert immer.
+  var tileFails = 0, tilesOk = false;
+  function onTileError() { tileFails++; updateMapStatus(); }
+  function onTileLoad() { tileFails = 0; tilesOk = true; updateMapStatus(); }
+  function updateMapStatus() {
+    var el = $('mapStatus'), msg = '';
+    if (typeof L === 'undefined') msg = 'Karte nicht geladen – Route funktioniert trotzdem';
+    else if (navigator.onLine === false) msg = 'Offline – Karte braucht Internet, Route geht trotzdem';
+    else if (tileFails >= TILE_FAIL_LIMIT) msg = 'Karte gerade nicht verfügbar – Route funktioniert trotzdem';
+    el.textContent = msg;
+    el.hidden = !msg;
+    if (sheetCollapsed) setSheetY(collapsedOffset());   // Höhe des eingeklappten Panels anpassen
+  }
+  window.addEventListener('offline', updateMapStatus);
+  window.addEventListener('online', function () {
+    tileFails = 0; updateMapStatus();
+    if (tiles) tiles.redraw();   // fehlgeschlagene Kacheln neu laden
+  });
   function updateMapStyle() {
     if (!map) return;
     document.getElementById('map').classList.toggle('map-dark', isDark());
@@ -836,6 +890,7 @@
         setTimeout(function () { map.invalidateSize(); fitView(); }, 380);
       } else {
         refreshStats();
+        updateMapStatus();
         toast('Karte konnte nicht geladen werden – Route funktioniert trotzdem.');
       }
     }
