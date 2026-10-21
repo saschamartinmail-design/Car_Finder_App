@@ -76,6 +76,7 @@
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }   /* sonst überschreibt z. B. .ghost-btn das hidden-Attribut */
   html, body { margin: 0; height: 100%; }
   body {
     background: var(--bg); color: var(--text);
