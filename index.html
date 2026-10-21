@@ -241,6 +241,16 @@
   .prompt-card h2 { margin: 0; font-size: 24px; font-weight: 600; }
   .prompt-card .parked-at { margin: 0 0 6px; }
   .prompt-card .ghost-btn { justify-content: center; width: 100%; }
+  /* Info-Dialog „Über & Datenschutz“ */
+  .info-card { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; gap: 14px; }
+  .info-card h3 { margin: 6px 0 0; font-size: 15px; font-weight: 700; }
+  .info-card p, .info-card li { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+  .info-card ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+  .info-card strong { color: var(--text); font-weight: 600; }
+  .info-card .notice { padding: 12px 14px; border-radius: 14px; background: var(--surface-2); }
+  .info-card .notice p { color: var(--text); }
+  .ghost-btn.danger { color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, transparent); }
+  .info-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
   @keyframes fadein { from { opacity: 0; } }
   @keyframes slideup { from { transform: translateY(30px); opacity: 0; } }
   #toast {
@@ -269,6 +279,8 @@
   <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
   <symbol id="i-plus-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><path d="M12 7v6M9 10h6"/></symbol>
 </svg>
 
@@ -282,6 +294,7 @@
     <div class="top-actions">
       <span class="chip" id="gpsChip" data-state="search" role="status" aria-live="polite"><span class="dot"></span><span id="gpsText">GPS sucht …</span></span>
       <button class="icon-btn theme-btn" type="button" aria-label="Farbschema wechseln"><svg class="i"><use href="#i-auto"/></svg></button>
+      <button class="icon-btn info-btn" type="button" aria-label="Über die App &amp; Datenschutz"><svg class="i"><use href="#i-info"/></svg></button>
     </div>
   </header>
 
@@ -314,6 +327,7 @@
     <div class="top-actions">
       <button class="icon-btn theme-btn" type="button" aria-label="Farbschema wechseln"><svg class="i"><use href="#i-auto"/></svg></button>
       <button class="icon-btn" id="fitBtn" type="button" aria-label="Auto und mich anzeigen"><svg class="i"><use href="#i-target"/></svg></button>
+      <button class="icon-btn info-btn" type="button" aria-label="Über die App &amp; Datenschutz"><svg class="i"><use href="#i-info"/></svg></button>
     </div>
   </div>
 
@@ -359,6 +373,41 @@
   </div>
 </div>
 
+<div id="infoPrompt" class="prompt" hidden>
+  <div class="prompt-card info-card" role="dialog" aria-modal="true" aria-labelledby="infoTitle" tabindex="-1">
+    <div class="eyebrow">Über die App</div>
+    <h2 class="display" id="infoTitle">Car Finder</h2>
+
+    <div class="notice">
+      <p><strong>Nutzung auf eigene Gefahr.</strong> Car Finder ist ein privates, kostenloses Hobbyprojekt. Es gibt keine Garantie, dass GPS, Karte oder Route immer funktionieren oder genau sind. Bitte verlass dich nicht ausschließlich auf die App.</p>
+    </div>
+
+    <h3>Was die App speichert</h3>
+    <p>Nur auf deinem Handy, im Speicher des Browsers: deinen letzten Parkplatz (Koordinaten, Genauigkeit, Uhrzeit), das gewählte Farbschema und ob das Info-Panel eingeklappt ist. Es gibt keine Konten, keine Cookies, kein Tracking und keinen eigenen Server. Niemand außer dir sieht deinen Parkplatz.</p>
+
+    <h3>Wer deine IP-Adresse sieht</h3>
+    <p>Wie bei jeder Webseite erfährt ein Dienst deine IP-Adresse, wenn das Handy Daten von ihm lädt:</p>
+    <ul>
+      <li><strong>GitHub</strong> (GitHub Pages) liefert die App-Dateien aus und führt dabei Server-Protokolle.</li>
+      <li><strong>OpenStreetMap</strong> liefert die Kartenbilder, solange die Karte angezeigt wird.</li>
+      <li><strong>Google</strong> nur, wenn du auf „Zu Fuß zum Auto“ tippst. Dann übernimmt Google Maps, und dort gelten die Datenschutzregeln von Google.</li>
+    </ul>
+
+    <h3>Standort</h3>
+    <p>Die App fragt den Standort nur über die Browser-Berechtigung ab. Er wird ausschließlich auf dem Handy verwendet, um den Parkplatz zu speichern und die Entfernung zu berechnen. Die Berechtigung kannst du jederzeit in den Chrome-Einstellungen entziehen.</p>
+
+    <h3>Daten löschen</h3>
+    <p>Mit dem Knopf unten löschst du den gespeicherten Parkplatz. Alles andere entfernst du über Chrome → Einstellungen → Website-Einstellungen → diese Adresse → Daten löschen, oder indem du die App deinstallierst.</p>
+
+    <div class="info-actions">
+      <button class="ghost-btn danger" id="deleteParking" type="button" hidden>
+        <svg class="i"><use href="#i-trash"/></svg> <span id="deleteParkingLabel">Parkplatz löschen</span>
+      </button>
+      <button class="ghost-btn" id="infoClose" type="button">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="leaflet.js"></script>
@@ -380,6 +429,10 @@
     get: function (k) {
       try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }
       catch (e) { return memory[k] || null; }
+    },
+    remove: function (k) {
+      delete memory[k];
+      try { localStorage.removeItem(k); } catch (e) {}
     },
     set: function (k, v) {
       memory[k] = v;
@@ -710,6 +763,48 @@
   // Tastatur: Enter/Leertaste auf dem Griff
   sheetHandle.addEventListener('click', function (e) { if (e.detail === 0) setSheet(!sheetCollapsed, true); });
   window.addEventListener('resize', function () { if (sheetCollapsed) setSheetY(collapsedOffset()); });
+
+  // ---------- Info-Dialog „Über & Datenschutz“ ----------
+  var deleteArmed = null;
+  function disarmDelete() {
+    clearTimeout(deleteArmed); deleteArmed = null;
+    $('deleteParkingLabel').textContent = 'Parkplatz löschen';
+  }
+  function openInfo() {
+    disarmDelete();
+    $('deleteParking').hidden = !parking;
+    $('infoPrompt').hidden = false;
+    var card = $('infoPrompt').querySelector('.info-card');
+    card.scrollTop = 0; card.focus();
+  }
+  function closeInfo() { disarmDelete(); $('infoPrompt').hidden = true; }
+  function deleteParking() {
+    // Zweistufig: erster Tipp fragt nach, zweiter Tipp löscht
+    if (!deleteArmed) {
+      $('deleteParkingLabel').textContent = 'Wirklich löschen?';
+      deleteArmed = setTimeout(disarmDelete, 4000);
+      return;
+    }
+    disarmDelete();
+    parking = null;
+    store.remove(PARK_KEY);
+    if (map) {
+      if (carMarker) { map.removeLayer(carMarker); carMarker = null; }
+      if (line) { map.removeLayer(line); line = null; }
+    }
+    closeInfo();
+    showScreen('park');
+    toast('Parkplatz gelöscht.');
+  }
+  document.querySelectorAll('.info-btn').forEach(function (b) { b.addEventListener('click', openInfo); });
+  $('infoClose').addEventListener('click', closeInfo);
+  $('deleteParking').addEventListener('click', deleteParking);
+  $('infoPrompt').addEventListener('click', function (e) { if (e.target === this) closeInfo(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!$('infoPrompt').hidden) closeInfo();
+    else if (!$('routePrompt').hidden) closeRoutePrompt();
+  });
 
   // ---------- Kurzbefehl-Dialog „Zu Fuß zum Auto“ ----------
   function openRoutePrompt() {

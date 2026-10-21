@@ -10,6 +10,7 @@ Schlanke Web-App: Parkposition per Knopfdruck speichern, auf der Karte anzeigen 
 - **Kurzbefehle:** App-Symbol lange drücken → „Jetzt parken“ (speichert sofort) oder „Zu Fuß zum Auto“.
 - **Offline:** App-Dateien und Schriften werden bei der Installation auf dem Handy zwischengespeichert. Die Kartenkacheln brauchen Internet, die Parkposition und der Route-Knopf gehen aber auch ohne Karte.
 - **Datenschutz:** Die Position wird nur lokal im Browser des Handys gespeichert (localStorage). Die Schriften liegen im Repo selbst, es gibt keine Verbindung zu Google Fonts. Externe Verbindungen: nur OpenStreetMap (Kartenkacheln) und Google Maps, wenn man die Route startet.
+- **Über & Datenschutz:** ⓘ-Knopf oben rechts. Zeigt den Hinweis „Nutzung auf eigene Gefahr“, welche Daten wo landen und einen Knopf „Parkplatz löschen“ (zweimal tippen zur Bestätigung). Der Text steckt in `index.html` und ist auch offline lesbar.
 - **Dauerhafter Speicher:** Beim Parken bittet die App Chrome, ihre Daten nicht automatisch aufzuräumen (`navigator.storage.persist()`). Die Position bleibt also auch bei vollem Handyspeicher, beim Schließen der App und bei einem Neustart erhalten.
 
 ## Dateien
