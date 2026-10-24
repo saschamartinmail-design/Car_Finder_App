@@ -2,6 +2,9 @@
 
 Schlanke Web-App: Parkposition per Knopfdruck speichern, auf der Karte anzeigen und mit Google Maps zu Fuß zurück zum Auto navigieren.
 
+**App:** https://carfinderapp.github.io/Car_Finder_App/
+**Repository:** https://github.com/carfinderapp/Car_Finder_App
+
 ## Funktionen
 - **Parken:** großer Knopf „Jetzt parken“. Die App wartet bis zu 12 s auf ein GPS-Signal mit höchstens ± 20 m und speichert dann.
 - **Karte:** Karte über den ganzen Bildschirm mit Auto, eigener Position (live) und Luftlinie. Unten Parkdauer, Entfernung, geschätzter Fußweg und GPS-Genauigkeit.
@@ -29,15 +32,27 @@ leaflet.js, leaflet.css Kartenbibliothek Leaflet 1.9.4
 ```
 
 ## Veröffentlichen über GitHub Pages
-1. Neues Repository anlegen, z. B. `carfinder`.
-2. **Add file → Upload files**, alle 16 Dateien aus diesem Ordner markieren und hochladen → **Commit changes**.
-3. Im Repository: **Settings → Pages → Source: „Deploy from a branch“ → Branch `main` / `/ (root)` → Save**.
-4. Nach ca. 1 Minute läuft die App unter `https://<dein-github-name>.github.io/carfinder/`.
+Die App liegt im Repository `Car_Finder_App` der Organisation **carfinderapp** und wird von dort über GitHub Pages ausgeliefert:
 
-> Hinweis: GitHub Pages ist bei kostenlosen Konten nur für **öffentliche** Repositories verfügbar. Die Parkpositionen landen trotzdem nie im Repository, sie bleiben auf dem Handy.
+- Repository: `https://github.com/carfinderapp/Car_Finder_App`
+- App-Adresse: `https://carfinderapp.github.io/Car_Finder_App/`
+- Pages-Einstellung: **Settings → Pages → Source: „Deploy from a branch“ → Branch `main` / `/ (root)`**
+
+Änderungen werden einfach auf `main` hochgeladen bzw. gepusht. Nach ca. 1 Minute ist die neue Version online. Wird `sw.js` oder eine App-Datei geändert, in `sw.js` die Versionsnummer bei `CACHE` hochzählen, damit die Handys die neue Version übernehmen.
+
+Alle Pfade in der App sind relativ (`./`). Die App läuft deshalb ohne Code-Änderung unter jeder Adresse, auch nach einem erneuten Umzug.
+
+> Hinweis: GitHub Pages ist bei kostenlosen Konten und Organisationen nur für **öffentliche** Repositories verfügbar. Die Parkpositionen landen trotzdem nie im Repository, sie bleiben auf dem Handy.
+
+### Umzug vom persönlichen Konto (Oktober 2026)
+Das Repository lag vorher unter `github.com/saschamartinmail-design/Car_Finder_App` (App unter `https://saschamartinmail-design.github.io/Car_Finder_App/`). GitHub leitet beim Übertragen nur die Repository-Adresse weiter, **nicht** die GitHub-Pages-Adresse. Die alte App-Adresse liefert daher einen 404-Fehler.
+
+Weil sich die Herkunft (Domain) geändert hat, gilt für jedes Handy:
+1. Alte App vom Startbildschirm deinstallieren. Ein dort gespeicherter Parkplatz lässt sich nicht übernehmen, einfach neu parken.
+2. Die neue Adresse in Chrome öffnen, Standort erneut erlauben und die App neu installieren.
 
 ## Auf dem Android-Handy installieren
-1. Die Adresse in **Chrome** öffnen.
+1. `https://carfinderapp.github.io/Car_Finder_App/` in **Chrome** öffnen (genau so, mit Groß-/Kleinschreibung und `/` am Ende).
 2. Standortzugriff erlauben.
 3. Menü ⋮ → **„Zum Startbildschirm hinzufügen“ / „App installieren“**.
 4. Danach startet Car Finder wie eine normale App, ohne Browserleiste.

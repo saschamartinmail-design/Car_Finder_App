@@ -1,6 +1,6 @@
 // Car Finder – Service Worker
 // App-Dateien werden offline vorgehalten; Kartenkacheln kommen immer aus dem Netz.
-const CACHE = 'carfinder-v10';
+const CACHE = 'carfinder-v11';
 const APP_SHELL = [
   './',
   './index.html',
@@ -39,8 +39,11 @@ self.addEventListener('fetch', (event) => {
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put('./index.html', copy));
+        // Nur echte Seiten zwischenspeichern – eine 404-Fehlerseite darf die App im Cache nicht überschreiben
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put('./index.html', copy));
+        }
         return res;
       }).catch(() => caches.match('./index.html'))
     );
